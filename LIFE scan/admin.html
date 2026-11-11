@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Dashboard – ScanID</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="backdrop" id="backdrop"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="emblem"></div><div class="brand-name">ScanID<small>Admin Console</small></div></div>
+    <ul class="side-menu">
+      <li><button class="active" data-tab="approvals" data-title="Approvals">✔ Approvals <span class="pill hidden" id="pill">0</span></button></li>
+      <li><button data-tab="students" data-title="Students">🎓 Students</button></li>
+      <li><button data-tab="staff" data-title="Teachers / Staff">👤 Teachers</button></li>
+      <li><button data-tab="scanner" data-title="QR Scanner">▣ QR Scanner</button></li>
+      <li><button data-tab="logs" data-title="Scan Logs">☰ Scan Logs</button></li>
+    </ul>
+    <button class="btn btn-outline btn-block" onclick="logout()">Logout</button>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      <h1 id="tabTitle" style="margin:0;">Approvals</h1>
+    </div>
+
+    <div class="stats four">
+      <div class="stat"><strong id="cStudents">0</strong><span>Students</span></div>
+      <div class="stat"><strong id="cStaff">0</strong><span>Teachers</span></div>
+      <div class="stat"><strong id="cScans">0</strong><span>Scans today</span></div>
+      <div class="stat"><strong id="cFail" style="color:#dc2626">0</strong><span>Failed today</span></div>
+    </div>
+
+    <!-- 0. APPROVALS -->
+    <section class="tab active" id="approvals">
+      <p class="muted">New students and teachers wait here. They can only sign in after you approve them.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Type</th><th>ID / Department</th><th>Email</th><th>Registered</th><th>Actions</th></tr></thead>
+          <tbody id="approvalRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 1. STUDENTS -->
+    <section class="tab" id="students">
+      <div class="toolbar">
+        <input class="input" type="search" id="qStudent" placeholder="Search name or ID…">
+        <select class="input" id="fLevel"><option value="">All Levels</option><option>Level 1</option><option>Level 2</option><option>Level 3</option><option>HND 1</option><option>HND 2</option></select>
+        <select class="input" id="fGroup"><option value="">All Groups</option><option>Day</option><option>Night</option></select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Full Name</th><th>ID</th><th>Field</th><th>Level</th><th>Group</th><th>Academic Year</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="studentRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 2. TEACHERS / STAFF -->
+    <section class="tab" id="staff">
+      <div class="toolbar">
+        <button class="btn btn-accent" id="addStaff">＋ Assign Staff</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="staffRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 3. QR SCANNER -->
+    <section class="tab" id="scanner">
+      <div class="card" style="max-width:520px;" id="scanBox">
+        <div class="scanner">
+          <video muted playsinline></video>
+          <div class="frame">
+            <span class="corner tl"></span><span class="corner tr"></span>
+            <span class="corner bl"></span><span class="corner br"></span>
+            <span class="scan-line"></span>
+          </div>
+        </div>
+        <div class="scan-status"><span class="dot off"></span><span class="status-text">Camera is off</span></div>
+        <div class="center">
+          <button type="button" class="btn-link" onclick="toggleManual(document.getElementById('scanBox'))">Enter Token Manually</button>
+          <button type="button" class="btn-link" onclick="startScanner(document.getElementById('scanBox'))">Restart Camera</button>
+        </div>
+        <div class="manual-box">
+          <input class="input" type="text" id="manualToken" placeholder="Paste or type token">
+          <button class="btn btn-accent" type="button" onclick="verifyToken(document.getElementById('manualToken').value)">Verify</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. SCAN LOGS -->
+    <section class="tab" id="logs">
+      <div class="row-between" style="margin-bottom:.75rem;">
+        <span class="live"><span class="dot"></span> Live</span>
+        <select class="input" id="fResult" style="max-width:160px;padding:.5rem .7rem;"><option value="">All results</option><option value="ok">Success</option><option value="fail">Fail</option></select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Timestamp</th><th>Scanned By (Staff)</th><th>Student ID / Name</th><th>Status</th></tr></thead>
+          <tbody id="logRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Edit window -->
+  <dialog id="editDialog">
+    <form id="editForm">
+      <div id="editBody"></div>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('editDialog').close()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+  <script src="app.js"></script>
+  <script>
+    var me = requireRole('admin');
+    var $ = function (id) { return document.getElementById(id); };
+    var editingEmail = null;
+
+    var BADGES = { active: ['badge-green', 'Active'], pending: ['badge-amber', 'Pending'], blocked: ['badge-red', 'Blocked'], declined: ['badge-red', 'Declined'], inactive: ['badge-red', 'Deactivated'] };
+    function statusBadge(s) { var b = BADGES[s] || ['badge-navy', s]; return '<span class="badge ' + b[0] + '">' + b[1] + '</span>'; }
+    function empty(cols, text) { return '<tr><td colspan="' + cols + '" class="empty">' + text + '</td></tr>'; }
+    function btn(act, email, label, cls) { return '<button class="btn ' + cls + ' btn-sm" data-act="' + act + '" data-email="' + esc(email) + '">' + label + '</button>'; }
+
+    // Buttons depend on the account status
+    function actions(u) {
+      if (u.status === 'pending') return btn('approve', u.email, 'Approve', 'btn-accent') + btn('decline', u.email, 'Decline', 'btn-danger');
+      if (u.status === 'declined') return btn('approve', u.email, 'Approve', 'btn-accent');
+      var edit = btn('edit', u.email, 'Edit', 'btn-outline');
+      if (u.role === 'student') return edit + (u.status === 'active' ? btn('block', u.email, 'Block', 'btn-danger') : btn('block', u.email, 'Unblock', 'btn-accent'));
+      return edit + (u.status === 'active' ? btn('toggle', u.email, 'Deactivate', 'btn-danger') : btn('toggle', u.email, 'Activate', 'btn-accent'));
+    }
+
+    function renderApprovals() {
+      var rows = getUsers().filter(function (u) { return u.status === 'pending'; });
+      $('approvalRows').innerHTML = rows.length ? rows.map(function (u) {
+        return '<tr><td>' + esc(u.fullname) + '</td><td><span class="badge ' + (u.role === 'student' ? 'badge-navy">Student' : 'badge-teal">Teacher') + '</span></td><td>' +
+          esc(u.role === 'student' ? u.id + ' · ' + u.level : u.department) + '</td><td>' + esc(u.email) + '</td><td>' + (u.created ? fmtTime(u.created) : '-') + '</td><td>' +
+          btn('approve', u.email, 'Approve', 'btn-accent') + btn('decline', u.email, 'Decline', 'btn-danger') + '</td></tr>';
+      }).join('') : empty(6, 'No pending requests.');
+      $('pill').textContent = rows.length;
+      $('pill').classList.toggle('hidden', rows.length === 0);
+    }
+    function renderStudents() {
+      var q = $('qStudent').value.toLowerCase(), lv = $('fLevel').value, gr = $('fGroup').value;
+      var rows = getUsers().filter(function (u) {
+        return u.role === 'student' && (!lv || u.level === lv) && (!gr || u.group === gr) && (u.fullname + ' ' + u.id).toLowerCase().indexOf(q) !== -1;
+      });
+      $('studentRows').innerHTML = rows.length ? rows.map(function (u) {
+        return '<tr><td>' + esc(u.fullname) + '</td><td>' + esc(u.id) + '</td><td>' + esc(u.field) + '</td><td>' + esc(u.level) + '</td><td>' + esc(u.group) +
+          '</td><td>' + esc(u.year) + '</td><td>' + statusBadge(u.status) + '</td><td>' + actions(u) + '</td></tr>';
+      }).join('') : empty(8, 'No students found.');
+    }
+    function renderStaff() {
+      var rows = getUsers().filter(function (u) { return u.role === 'staff'; });
+      $('staffRows').innerHTML = rows.length ? rows.map(function (u) {
+        return '<tr><td>' + esc(u.fullname) + '</td><td>' + esc(u.email) + '</td><td>' + esc(u.department) + '</td><td><span class="badge badge-teal">' + esc(u.title) +
+          '</span></td><td>' + statusBadge(u.status) + '</td><td>' + actions(u) + '</td></tr>';
+      }).join('') : empty(6, 'No staff yet.');
+    }
+    function renderLogs() {
+      var f = $('fResult').value;
+      var logs = getLogs().filter(function (l) { return !f || (f === 'ok') === l.ok; });
+      $('logRows').innerHTML = logs.length ? logs.map(function (l) {
+        return '<tr><td>' + fmtTime(l.time) + '</td><td>' + esc(l.by) + '</td><td>' + esc(l.student) + '</td><td><span class="badge ' +
+          (l.ok ? 'badge-green">Success' : 'badge-red" title="' + esc(l.reason) + '">Fail') + '</span></td></tr>';
+      }).join('') : empty(4, 'No scans yet.');
+    }
+    function renderCounts() {
+      var users = getUsers(), today = getLogs().filter(function (l) { return isToday(l.time); });
+      $('cStudents').textContent = users.filter(function (u) { return u.role === 'student' && u.status === 'active'; }).length;
+      $('cStaff').textContent = users.filter(function (u) { return u.role === 'staff' && u.status === 'active'; }).length;
+      $('cScans').textContent = today.length;
+      $('cFail').textContent = today.filter(function (l) { return !l.ok; }).length;
+    }
+    function renderAll() { renderApprovals(); renderStudents(); renderStaff(); renderLogs(); renderCounts(); }
+
+    function updateUser(email, fn) { var users = getUsers(); users.forEach(function (u) { if (u.email === email) fn(u); }); saveUsers(users); renderAll(); }
+
+    // One click handler for every table button
+    function onAction(e) {
+      var b = e.target.closest('button[data-act]'); if (!b) return;
+      var email = b.dataset.email, act = b.dataset.act;
+      if (act === 'edit') { openEdit(email); return; }
+      updateUser(email, function (u) {
+        if (act === 'approve') u.status = 'active';
+        else if (act === 'decline') u.status = 'declined';
+        else if (act === 'block') u.status = u.status === 'active' ? 'blocked' : 'active';
+        else if (act === 'toggle') u.status = u.status === 'active' ? 'inactive' : 'active';
+      });
+    }
+    ['approvalRows', 'studentRows', 'staffRows'].forEach(function (id) { $(id).addEventListener('click', onAction); });
+
+    /* ---- Edit window ---- */
+    function options(list, current) {
+      var all = list.indexOf(current) === -1 ? list.concat(current) : list;
+      return all.map(function (v) { return '<option' + (v === current ? ' selected' : '') + '>' + esc(v) + '</option>'; }).join('');
+    }
+    function openEdit(email) {
+      var u = getUsers().filter(function (x) { return x.email === email; })[0]; if (!u) return;
+      editingEmail = email;
+      var h = '<h2>Edit ' + (u.role === 'student' ? 'student' : 'teacher') + '</h2>' +
+        '<div class="field"><label>Full name</label><input class="input" id="eName" required value="' + esc(u.fullname) + '"></div>';
+      if (u.role === 'student') {
+        h += '<div class="field"><label>Field</label><select class="input" id="eField">' + options(FIELDS, u.field) + '</select></div>' +
+             '<div class="field"><label>Level</label><select class="input" id="eLevel">' + options(LEVELS, u.level) + '</select></div>' +
+             '<div class="field"><label>Group</label><select class="input" id="eGroup">' + options(['Day', 'Night'], u.group) + '</select></div>' +
+             '<div class="field"><label>Academic Year</label><select class="input" id="eYear">' + options(YEARS, u.year) + '</select></div>';
+      } else {
+        h += '<div class="field"><label>Department</label><select class="input" id="eDept">' + options(DEPARTMENTS, u.department) + '</select></div>' +
+             '<div class="field"><label>Role</label><select class="input" id="eTitle">' + options(TITLES, u.title) + '</select></div>';
+      }
+      $('editBody').innerHTML = h;
+      $('editDialog').showModal();
+    }
+    $('editForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      updateUser(editingEmail, function (u) {
+        u.fullname = $('eName').value.trim() || u.fullname;
+        if (u.role === 'student') { u.field = $('eField').value; u.level = $('eLevel').value; u.group = $('eGroup').value; u.year = $('eYear').value; }
+        else { u.department = $('eDept').value; u.title = $('eTitle').value; }
+      });
+      $('editDialog').close();
+    });
+
+    $('addStaff').addEventListener('click', function () {
+      var name = prompt('Staff full name:'); if (!name) return;
+      var email = prompt('Staff email:'); if (!email) return;
+      var dept = prompt('Department:', 'Student Affairs') || 'Student Affairs';
+      var users = getUsers();
+      if (users.some(function (u) { return u.email.toLowerCase() === email.trim().toLowerCase(); })) { alert('This email already exists.'); return; }
+      users.push({ role: 'staff', fullname: name.trim(), id: 'STF' + String(Date.now()).slice(-6), email: email.trim().toLowerCase(), password: 'staff123',
+                   department: dept.trim(), title: 'Verification Officer', status: 'active', created: new Date().toISOString() });
+      saveUsers(users); renderAll();
+      alert('Staff added. Temporary password: staff123');
+    });
+    ['qStudent', 'fLevel', 'fGroup'].forEach(function (id) { $(id).addEventListener('input', renderStudents); });
+    $('fResult').addEventListener('change', renderLogs);
+
+    /* ---- tabs + mobile drawer ---- */
+    var buttons = document.querySelectorAll('.side-menu button');
+    function closeDrawer() { $('sidebar').classList.remove('open'); $('backdrop').classList.remove('show'); }
+    function openTab(b) {
+      buttons.forEach(function (x) { x.classList.remove('active'); });
+      document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+      b.classList.add('active');
+      $(b.dataset.tab).classList.add('active');
+      $('tabTitle').textContent = b.dataset.title;
+      closeDrawer();
+      if (b.dataset.tab === 'scanner') startScanner($('scanBox')); else stopScanner();
+    }
+    buttons.forEach(function (b) { b.addEventListener('click', function () { openTab(b); }); });
+    $('menuBtn').addEventListener('click', function () { $('sidebar').classList.add('open'); $('backdrop').classList.add('show'); });
+    $('backdrop').addEventListener('click', closeDrawer);
+
+    if (me) {
+      renderAll();
+      // refresh live (new sign-ups and scans appear by themselves)
+      setInterval(function () { if (!$('editDialog').open) renderAll(); }, 3000);
+      var h = location.hash.replace('#', '');
+      var target = h && document.querySelector('.side-menu button[data-tab="' + h + '"]');
+      if (target) openTab(target);
+    }
+  </script>
+</body>
+</html>

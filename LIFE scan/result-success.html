@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verification Successful – ScanID</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="result-page">
+  <header class="result-banner pass">
+    <div class="result-icon" aria-hidden="true">✓</div>
+    <h1>Verification Successful</h1>
+    <p style="margin:.4rem 0 0;opacity:.9;">Valid student identity confirmed</p>
+  </header>
+
+  <main class="result-body">
+    <section class="card">
+      <div class="details-grid">
+        <div class="detail" style="grid-column:1/-1;"><span>Full Name</span><strong id="name"></strong></div>
+        <div class="detail"><span>Student ID Number</span><strong id="sid"></strong></div>
+        <div class="detail"><span>Field &amp; Level</span><strong id="fl"></strong></div>
+        <div class="detail"><span>Group</span><strong id="group"></strong></div>
+        <div class="detail"><span>Academic Year</span><strong id="year"></strong></div>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:1.25rem;" onclick="backHome()">Scan Next Code</button>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    var r = read(KEY_RESULT, null);
+    if (!currentUser() || !r || !r.ok) { go('login.html'); }
+    else {
+      var set = function (id, t) { document.getElementById(id).textContent = t; };
+      var s = r.student;
+      set('name', s.fullname); set('sid', s.id); set('fl', s.field + ' · ' + s.level); set('group', s.group); set('year', s.year);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Staff Scanner – ScanID</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="has-bottom-nav">
+  <header class="topbar">
+    <div class="brand"><div class="emblem"></div><div class="brand-name">ScanID<small>Staff Portal</small></div></div>
+    <nav>
+      <a class="active" href="#scanner">Scanner</a>
+      <a href="#history">Scan History</a>
+      <a href="#profile">Profile</a>
+    </nav>
+    <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+  </header>
+
+  <main class="container narrow">
+    <section class="card" id="profile">
+      <div class="profile-head">
+        <div class="avatar" id="avatar"></div>
+        <div>
+          <h1 id="name"></h1>
+          <div class="muted" id="dept"></div>
+          <div class="chips"><span class="badge badge-teal" id="title"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="scanner">
+      <div id="scanBox">
+        <div class="scanner">
+          <video muted playsinline></video>
+          <div class="frame">
+            <span class="corner tl"></span><span class="corner tr"></span>
+            <span class="corner bl"></span><span class="corner br"></span>
+            <span class="scan-line"></span>
+          </div>
+        </div>
+        <div class="scan-status"><span class="dot off"></span><span class="status-text">Starting camera…</span></div>
+
+        <div class="center">
+          <button type="button" class="btn-link" onclick="toggleManual(document.getElementById('scanBox'))">Enter Token Manually</button>
+          <button type="button" class="btn-link" onclick="startScanner(document.getElementById('scanBox'))">Restart Camera</button>
+        </div>
+        <div class="manual-box">
+          <input class="input" type="text" id="manualToken" placeholder="Paste or type token">
+          <button class="btn btn-accent" type="button" onclick="verifyToken(document.getElementById('manualToken').value)">Verify</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats" style="margin-top:1rem;">
+      <div class="stat"><strong id="sTotal">0</strong><span>Scans today</span></div>
+      <div class="stat"><strong id="sOk" style="color:#16a34a">0</strong><span>Valid</span></div>
+      <div class="stat"><strong id="sFail" style="color:#dc2626">0</strong><span>Failed</span></div>
+    </section>
+
+    <section class="card" id="history" style="margin-top:1rem;">
+      <h3>My recent scans</h3>
+      <div id="recent"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <a class="active" href="#scanner"><span class="ico">▣</span>Scan</a>
+    <a href="#history"><span class="ico">☰</span>History</a>
+    <a href="#profile"><span class="ico">☺</span>Profile</a>
+  </nav>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+  <script src="app.js"></script>
+  <script>
+    var me = requireRole('staff');
+    if (me) {
+      var set = function (id, t) { document.getElementById(id).textContent = t; };
+      set('avatar', initials(me.fullname)); set('name', me.fullname);
+      set('dept', 'Department: ' + me.department); set('title', me.title);
+
+      var mine = getLogs().filter(function (l) { return l.byEmail === me.email && isToday(l.time); });
+      set('sTotal', mine.length);
+      set('sOk', mine.filter(function (l) { return l.ok; }).length);
+      set('sFail', mine.filter(function (l) { return !l.ok; }).length);
+
+      var recent = getLogs().filter(function (l) { return l.byEmail === me.email; }).slice(0, 8);
+      document.getElementById('recent').innerHTML = recent.length ? recent.map(function (l) {
+        return '<div class="row-between" style="padding:.5rem 0;border-top:1px solid #dbe3ef"><div><strong>' + esc(l.student) +
+          '</strong><div class="muted">' + fmtTime(l.time) + '</div></div><span class="badge ' + (l.ok ? 'badge-green">Success' : 'badge-red">Fail') + '</span></div>';
+      }).join('') : '<p class="empty">No scans yet.</p>';
+
+      startScanner(document.getElementById('scanBox'));
+    }
+  </script>
+</body>
+</html>

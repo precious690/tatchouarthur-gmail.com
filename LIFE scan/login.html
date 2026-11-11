@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome – ScanID</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+  <main class="auth-shell" id="shell">
+
+    <!-- LEFT: welcome panel -->
+    <aside class="auth-side">
+      <div class="circles"><span class="circle c1"></span><span class="circle c2"></span></div>
+      <div class="side-content">
+        <h2 id="sideTitle">Welcome</h2>
+        <h3 id="sideSub">Student Verification System</h3>
+        <p id="sideText">Sign in to see your student ID and QR code, or to start verifying students. New here? Create your account.</p>
+        <button type="button" class="btn-ghost" id="sideBtn" onclick="switchTab('register')">Register</button>
+      </div>
+    </aside>
+
+    <!-- RIGHT: forms -->
+    <section class="auth-main">
+
+      <!-- LOGIN -->
+      <div class="panel active" id="loginPanel">
+        <h1>Sign in</h1>
+        <p class="muted">Enter your email and password to continue.</p>
+
+        <div id="loginMsg" class="msg"></div>
+
+        <form id="loginForm">
+          <div class="field">
+            <div class="icon-field">
+              <span class="ico">✉</span>
+              <input class="input" type="email" id="l-email" placeholder="Email address" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="pw-wrap icon-field">
+              <span class="ico">🔒</span>
+              <input class="input" type="password" id="l-password" placeholder="Password" required>
+              <button type="button" class="pw-toggle" onclick="togglePassword(this)">Show</button>
+            </div>
+          </div>
+
+          <div class="row-between field">
+            <label class="check"><input type="checkbox"> Remember me</label>
+            <a href="#" onclick="showMsg('loginMsg','Password reset will work once the backend is added.','ok'); return false;">Forgot Password?</a>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+        </form>
+
+        <p class="auth-foot">Don't have an account? <a href="#" onclick="switchTab('register'); return false;">Register</a></p>
+
+        <details class="demo">
+          <summary>Demo accounts (for testing)</summary>
+          <p style="margin:.5rem 0 0">Admin: <code>adminschool@gmail.com</code> / <code>admin123</code><br>
+          Teacher: <code>staff@school.edu</code> / <code>staff123</code><br>
+          Student: <code>mary@school.edu</code> / <code>student123</code></p>
+        </details>
+      </div>
+
+      <!-- REGISTER -->
+      <div class="panel" id="registerPanel">
+        <h1>Register</h1>
+        <p class="muted">Create your account. An admin must approve it before you can sign in.</p>
+
+        <div id="regMsg" class="msg"></div>
+
+        <form id="regForm">
+          <div class="field">
+            <div class="segmented">
+              <input type="radio" name="role" id="role-student" value="student" checked>
+              <label for="role-student">🎓 Student</label>
+              <input type="radio" name="role" id="role-staff" value="staff">
+              <label for="role-staff">👤 Teacher</label>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <input class="input" type="text" id="r-fullname" placeholder="Full name" required>
+            </div>
+
+            <!-- student only -->
+            <div class="role-group" data-role="student">
+              <div class="field">
+                <input class="input" type="text" id="r-id" placeholder="ID number" required>
+              </div>
+            </div>
+            <!-- teacher only -->
+            <div class="role-group hidden" data-role="staff">
+              <div class="field">
+                <select class="input" id="r-dept" required disabled>
+                  <option value="" disabled selected>Department</option>
+                  <option>Student Affairs</option>
+                  <option>Registry</option>
+                  <option>Security</option>
+                  <option>Administration</option>
+                  <option>Academics</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field full">
+              <input class="input" type="email" id="r-email" placeholder="Email address" required>
+            </div>
+            <div class="field">
+              <div class="pw-wrap">
+                <input class="input" type="password" id="r-password" placeholder="Password" minlength="6" required>
+                <button type="button" class="pw-toggle" onclick="togglePassword(this)">Show</button>
+              </div>
+            </div>
+            <div class="field">
+              <div class="pw-wrap">
+                <input class="input" type="password" id="r-confirm" placeholder="Confirm password" minlength="6" required>
+                <button type="button" class="pw-toggle" onclick="togglePassword(this)">Show</button>
+              </div>
+            </div>
+
+            <!-- student only -->
+            <div class="role-group" data-role="student">
+              <div class="field">
+                <select class="input" id="r-field" required>
+                  <option value="" disabled selected>Field / Specialization</option>
+                  <option>Software Engineering</option>
+                  <option>Networks &amp; Security</option>
+                  <option>Accounting</option>
+                  <option>Marketing</option>
+                  <option>Nursing</option>
+                  <option>Civil Engineering</option>
+                </select>
+              </div>
+              <div class="field">
+                <select class="input" id="r-level" required>
+                  <option value="" disabled selected>Level</option>
+                  <option>Level 1</option>
+                  <option>Level 2</option>
+                  <option>Level 3</option>
+                  <option>HND 1</option>
+                  <option>HND 2</option>
+                </select>
+              </div>
+              <div class="field">
+                <div class="segmented">
+                  <input type="radio" name="group" id="g-day" value="Day" checked>
+                  <label for="g-day">☀ Day</label>
+                  <input type="radio" name="group" id="g-night" value="Night">
+                  <label for="g-night">☾ Night</label>
+                </div>
+              </div>
+              <div class="field">
+                <select class="input" id="r-year">
+                  <option>2025/2026</option>
+                  <option>2026/2027</option>
+                  <option>2024/2025</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+        </form>
+
+        <p class="auth-foot">Already registered? <a href="#" onclick="switchTab('login'); return false;">Sign in</a></p>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    var $ = function (id) { return document.getElementById(id); };
+
+    // Swap between Sign in and Register (the left panel text changes too)
+    function switchTab(name) {
+      var isLogin = name === 'login';
+      $('loginPanel').classList.toggle('active', isLogin);
+      $('registerPanel').classList.toggle('active', !isLogin);
+      $('shell').classList.toggle('swap', !isLogin);
+      $('loginMsg').className = 'msg'; $('regMsg').className = 'msg';
+      $('sideTitle').textContent = isLogin ? 'Welcome' : 'Hello there';
+      $('sideSub').textContent = isLogin ? 'Student Verification System' : 'Join ScanID';
+      $('sideText').textContent = isLogin
+        ? 'Sign in to see your student ID and QR code, or to start verifying students. New here? Create your account.'
+        : 'Create your account in a minute. After an admin approves it, you can sign in. Already registered? Sign in.';
+      $('sideBtn').textContent = isLogin ? 'Register' : 'Sign in';
+      $('sideBtn').onclick = function () { switchTab(isLogin ? 'register' : 'login'); };
+      history.replaceState(null, '', isLogin ? '#login' : '#register');
+      window.scrollTo(0, 0);
+    }
+    if (location.hash === '#register') switchTab('register');
+    window.addEventListener('hashchange', function () { switchTab(location.hash === '#register' ? 'register' : 'login'); });
+
+    // Student / Teacher: show the right fields (hidden fields are disabled so they are not required)
+    function setRole(role) {
+      document.querySelectorAll('.role-group').forEach(function (g) {
+        var on = g.dataset.role === role;
+        g.classList.toggle('hidden', !on);
+        g.querySelectorAll('input, select').forEach(function (el) { el.disabled = !on; });
+      });
+    }
+    document.querySelectorAll('input[name=role]').forEach(function (r) {
+      r.addEventListener('change', function () { setRole(r.value); });
+    });
+    setRole('student');
+
+    $('loginForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var r = login($('l-email').value, $('l-password').value);
+      if (r.error) { showMsg('loginMsg', r.error); return; }
+      go(homeFor(r.user));
+    });
+
+    $('regForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if ($('r-password').value !== $('r-confirm').value) { showMsg('regMsg', 'Passwords do not match.'); return; }
+      var role = document.querySelector('input[name=role]:checked').value;
+      var r = registerUser({
+        role: role, fullname: $('r-fullname').value, email: $('r-email').value, password: $('r-password').value,
+        id: $('r-id').value, field: $('r-field').value, level: $('r-level').value, year: $('r-year').value,
+        group: document.querySelector('input[name=group]:checked').value, department: $('r-dept').value
+      });
+      if (r.error) { showMsg('regMsg', r.error); window.scrollTo(0, 0); return; }
+      $('regForm').reset(); setRole('student');
+      switchTab('login');
+      showMsg('loginMsg', 'Account created! An admin must approve it before you can sign in.', 'ok');
+    });
+  </script>
+</body>
+</html>

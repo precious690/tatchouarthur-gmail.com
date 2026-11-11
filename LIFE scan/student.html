@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Profile – ScanID</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="emblem"></div><div class="brand-name">ScanID<small>Student Portal</small></div></div>
+    <nav><a class="active" href="student.html">My Profile</a></nav>
+    <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+  </header>
+
+  <main class="container narrow">
+    <section class="card">
+      <div class="profile-head">
+        <div class="avatar" id="avatar"></div>
+        <div>
+          <h1 id="name"></h1>
+          <div class="muted" id="sid"></div>
+          <div class="chips">
+            <span class="badge badge-navy" id="field"></span>
+            <span class="badge badge-teal" id="level"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Student Details</h3>
+      <div class="details-grid">
+        <div class="detail"><span>Group</span><strong id="group"></strong></div>
+        <div class="detail"><span>Academic Year</span><strong id="year"></strong></div>
+        <div class="detail" style="grid-column: 1 / -1;"><span>Email</span><strong id="email"></strong></div>
+      </div>
+    </section>
+
+    <section class="card qr-card">
+      <span class="privacy-badge">Encrypted Official ID Token</span>
+      <div class="qr-box" id="qrcode"></div>
+      <p class="timer" id="timer"></p>
+      <p class="muted">Present this code to authorized staff for verification.</p>
+      <div class="actions">
+        <button class="btn btn-accent" type="button" onclick="newToken()">⟳ Refresh Token</button>
+        <button class="btn btn-outline" type="button" onclick="logout()">Logout</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="app.js"></script>
+  <script>
+    var me = requireRole('student');
+    var qr = null, expires = 0;
+
+    function newToken() {
+      var token = 'SCANID|' + me.id + '|' + Date.now();
+      expires = Date.now() + TOKEN_TTL;
+      if (typeof QRCode === 'undefined') {
+        document.getElementById('qrcode').innerHTML = '<span class="muted">QR library could not load.<br>Check your internet connection.</span>';
+        return;
+      }
+      if (!qr) {
+        qr = new QRCode(document.getElementById('qrcode'), { text: token, width: 200, height: 200, colorDark: '#0b1f3a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+      } else { qr.clear(); qr.makeCode(token); }
+    }
+    function tickTimer() {
+      var left = Math.max(0, expires - Date.now());
+      if (left === 0) { newToken(); return; }
+      var m = Math.floor(left / 60000), s = Math.floor(left / 1000) % 60;
+      document.getElementById('timer').textContent = 'Code refreshes in ' + m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    if (me) {
+      var set = function (id, t) { document.getElementById(id).textContent = t; };
+      set('avatar', initials(me.fullname)); set('name', me.fullname); set('sid', 'ID: ' + me.id);
+      set('field', me.field); set('level', me.level); set('group', me.group); set('year', me.year); set('email', me.email);
+      newToken(); tickTimer();
+      setInterval(tickTimer, 1000);
+    }
+  </script>
+</body>
+</html>

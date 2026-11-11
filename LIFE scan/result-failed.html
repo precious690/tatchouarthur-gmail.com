@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verification Failed – ScanID</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="result-page">
+  <header class="result-banner fail">
+    <div class="result-icon" aria-hidden="true">✕</div>
+    <h1>Verification Failed</h1>
+    <p style="margin:.4rem 0 0;opacity:.9;">This code could not be verified</p>
+  </header>
+
+  <main class="result-body">
+    <section class="card">
+      <div class="alert" role="alert" id="reason">Invalid QR Code</div>
+      <p class="muted" style="margin-bottom:.25rem;">Possible reasons:</p>
+      <ul class="reason-list">
+        <li>Invalid QR Code</li>
+        <li>Expired Token – ask the student to tap “Refresh Token”</li>
+        <li>Student Record Not Found</li>
+      </ul>
+      <button class="btn btn-primary btn-block" onclick="backHome()">Try Again</button>
+      <button class="btn btn-outline btn-block" style="margin-top:.6rem;" onclick="backHome()">Scan Next</button>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    var r = read(KEY_RESULT, null);
+    if (!currentUser()) { go('login.html'); }
+    else if (r && r.reason) { document.getElementById('reason').textContent = r.reason; }
+  </script>
+</body>
+</html>
